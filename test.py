@@ -1,62 +1,71 @@
-# Node of a doubly linked list
-class Node:
-    def __init__(self, next=None, prev=None, data=None):
-        self.next = next
-        self.prev = prev
-        self.data = data
+def word_counter(sentence):
+    if sentence == '':
+        return  {}
+    words = sentence.split(' ')
 
+    words = map(lambda w : w.lower(), words)
 
-class LRUCache:
+    frequency_dict: dict[str, int] = {}
 
-    h: Node
-    t: Node
-    length: int
-    values: dict
-
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.length = 0
-        self.values = {}
-
-    def get(self, key):
-        currun_node = self.values[key]
-        if (currun_node is self.h):
-            head_next = self.h.next
-            head_next.prev = None
-            self.h.next = None
-
-            
-            
-        return self.t.data if key in self.values else -1
-
-    def put(self, key, value):
-        if self.length == self.capacity:
-            pass
+    for word in words:
+        if word in frequency_dict:
+            frequency_dict[word] += 1
         else:
-            node = None
-            if self.length == 0:
-                node = Node(None, None, value)
-                self.h = node
-                self.t = node
-            else:
-                node = Node(None, self.t, value)
-                self.t.next = node
-                t = node
+            frequency_dict[word] = 1
 
-            self.length += 1
-            self.values[key] = node
-    
-    def printList(self):
-        n = self.h
-        while(n):
-            print(n.data)
-            n = n.next
+    return frequency_dict
+
+def run_tests():
+    test_cases = [
+        (
+            "hello world hello python",
+            {"hello": 2, "python": 1, "world": 1}
+        ),
+        (
+            "Python python PYTHON Java java",
+            {"java": 2, "python": 3}
+        ),
+        (
+            "coding",
+            {"coding": 1}
+        ),
+        (
+            "cat dog cat bird dog cat",
+            {"bird": 1, "cat": 3, "dog": 2}
+        ),
+        (
+            "apple banana cherry apple banana",
+            {"apple": 2, "banana": 2, "cherry": 1}
+        ),
+        (
+            "zebra apple mango zebra apple",
+            {"apple": 2, "mango": 1, "zebra": 2}
+        ),
+        (
+            "",
+            {}
+        ),
+        (
+            "1 2 1 python 2 python",
+            {"1": 2, "2": 2, "python": 2}
+        )
+    ]
+
+    passed = 0
+
+    for i, (sentence, expected) in enumerate(test_cases, 1):
+        result = word_counter(sentence)
+
+        if result == expected:
+            print(f"Test {i}: PASSED ✅")
+            passed += 1
+        else:
+            print(f"Test {i}: FAILED ❌")
+            print("Input:   ", sentence)
+            print("Expected:", expected)
+            print("Got:     ", result)
+
+    print(f"\nScore: {passed}/{len(test_cases)}")
 
 
-
-c = LRUCache(2)
-
-c.put(1, "A")
-c.put(2, "B")
-
-c.printList()
+run_tests()
