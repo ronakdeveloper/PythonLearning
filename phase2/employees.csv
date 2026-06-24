@@ -1,0 +1,6 @@
+emp_id,name,salary,dept
+1,Ronak,50000,SQL
+2,Amit,,Python
+3,Neha,30000,SQL
+4,Raj,90000,Python
+5,Jay,-10000,SQL

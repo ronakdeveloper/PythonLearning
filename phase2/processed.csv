@@ -1,0 +1,4 @@
+emp_id,name,salary,dept,annual_salary,grade
+1,Ronak,50000.0,SQL,600000.0,Junior
+3,Neha,30000.0,SQL,360000.0,Junior
+4,Raj,90000.0,Python,1080000.0,Senior
