@@ -28,4 +28,3 @@ def run_vwap():
     print(df[df['signal']])
     print(df[df['exit_signal']])
     # print(df[df['signal'] == True])
-

@@ -1,3 +1,3 @@
-from .python_trading.yf import run_vwap
+from python_trading.yf import run_vwap
 
 run_vwap()
