@@ -35,20 +35,14 @@ def generate_signal(data,size1,size2):
         (data[fastsma].shift(1) > data[slowsma].shift(1))
     )
 
+    data['entry_price'] = data['open'].shift(-1)
     return data
 
 
-result = getdata('ADANIPOWER.NS','2026-01-01','2026-07-02','1D')
+result = get_data('ADANIPOWER.NS','2026-01-01','2026-07-02','1D')
 
 result = add_sma(data=result,size=5)
 result = add_sma(data=result,size=20)
 result = generate_signal(data=result,size1=5,size2=20)
-print(result[result['signal']])
-print(result[result['exit_signal']])
 
-# df['sma_5'] = df['close'].rolling(window=5).mean()    
-# df['sma_20'] = df['close'].rolling(window=20).mean()
-
-# print(df[df['signal']])
-# print(df[df['exit_signal']])
-# print(df[df['signal'] == True])
+print(result.loc['2026-03-16','open'])
