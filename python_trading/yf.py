@@ -1,4 +1,5 @@
 import yfinance as yf
+import pandas as pd
 
 def get_data(name,fromdate,todate,timeframe):    
     df = yf.download(
@@ -45,4 +46,23 @@ result = add_sma(data=result,size=5)
 result = add_sma(data=result,size=20)
 result = generate_signal(data=result,size1=5,size2=20)
 
-print(result.loc['2026-03-16','open'])
+
+buy_rows = result[result['signal']]
+exit_rows = result[result['exit_signal']]
+# print(buy_rows)
+# print(exit_rows)    
+
+trades = []
+
+for (buy_date,buy_rows),(exit_date,exit_rows)  in zip(buy_rows.iterrows(), exit_rows.iterrows()):
+    trade = {
+        'entry_date' : buy_date,
+        'entry_price': buy_rows['entry_price'],
+        'sell_date' : exit_date,
+        'sell_price': exit_rows['entry_price'],
+        'profit': exit_rows['entry_price'] - buy_rows['entry_price']
+    }
+    trades.append(trade)
+
+df = pd.DataFrame(trades)
+print(df)
