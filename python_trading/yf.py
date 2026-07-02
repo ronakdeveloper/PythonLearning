@@ -35,7 +35,6 @@ def generate_signal(data,size1,size2):
         (data[fastsma].shift(1) > data[slowsma].shift(1))
     )
 
-<<<<<<< HEAD
     return data
 
 
@@ -53,9 +52,3 @@ print(result[result['exit_signal']])
 # print(df[df['signal']])
 # print(df[df['exit_signal']])
 # print(df[df['signal'] == True])
-
-=======
-    print(df[df['signal']])
-    print(df[df['exit_signal']])
-    # print(df[df['signal'] == True])
->>>>>>> 3f4c5a5cda5f87145b7b49853433166695383744
