@@ -46,23 +46,36 @@ result = add_sma(data=result,size=5)
 result = add_sma(data=result,size=20)
 result = generate_signal(data=result,size1=5,size2=20)
 
+def build_trade_log(result):    
+    buy_rows = result[result['signal']]
+    exit_rows = result[result['exit_signal']]
+    # print(buy_rows)
+    # print(exit_rows)    
 
-buy_rows = result[result['signal']]
-exit_rows = result[result['exit_signal']]
-# print(buy_rows)
-# print(exit_rows)    
+    trades = []
 
-trades = []
+    for (buy_date,buy_rows),(exit_date,exit_rows)  in zip(buy_rows.iterrows(), exit_rows.iterrows()):
+        trade = {
+            'entry_date' : buy_date,
+            'entry_price': buy_rows['entry_price'],
+            'sell_date' : exit_date,
+            'sell_price': exit_rows['entry_price'],
+            'profit': exit_rows['entry_price'] - buy_rows['entry_price'],
+            'percentage': (exit_rows['entry_price'] - buy_rows['entry_price']) / buy_rows['entry_price'] * 100
+        }
+        trades.append(trade)
 
-for (buy_date,buy_rows),(exit_date,exit_rows)  in zip(buy_rows.iterrows(), exit_rows.iterrows()):
-    trade = {
-        'entry_date' : buy_date,
-        'entry_price': buy_rows['entry_price'],
-        'sell_date' : exit_date,
-        'sell_price': exit_rows['entry_price'],
-        'profit': exit_rows['entry_price'] - buy_rows['entry_price']
-    }
-    trades.append(trade)
+    data = pd.DataFrame(trades)
+    return data
 
-df = pd.DataFrame(trades)
-print(df)
+trade_log = build_trade_log(result)
+print(trade_log)
+
+# def calculate_metrics():
+
+total_return = trade_log['percentage'].sum()
+win_rate = (trade_log['percentage'] > 0).mean() * 100
+avg_win = trade_log['percentage'][trade_log['percentage'] > 0].mean()
+avg_loss = trade_log['percentage'][trade_log['percentage'] < 0].mean()
+profit_factor = (trade_log['percentage'][trade_log['percentage'] > 0].sum()) / abs(trade_log['percentage'][trade_log['percentage'] < 0].sum())
+print(profit_factor)
