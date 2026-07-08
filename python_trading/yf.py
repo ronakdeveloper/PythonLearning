@@ -46,24 +46,57 @@ def build_trade_log(result,amount):
     # print(exit_rows)    
 
     trades = []
+    in_trade = False
+    entry_date = None
+    entry_price = None
+    exit_date = None
+    exit_price = None
     capital = amount 
 
-    for (buy_date,buy_rows),(exit_date,exit_rows)  in zip(buy_rows.iterrows(), exit_rows.iterrows()):
-        trade = {
-            'entry_date' : buy_date,
-            'entry_price': buy_rows['entry_price'],
-            'sell_date' : exit_date,
-            'sell_price': exit_rows['entry_price'],
-            'profit': exit_rows['entry_price'] - buy_rows['entry_price'],
-            'percentage': (exit_rows['entry_price'] - buy_rows['entry_price']) / buy_rows['entry_price'] * 100
-        }
-        trade['multiplier'] = 1 + (trade['percentage'] / 100)
-        trades.append(trade)
+    for date,row in result.iterrows():
+
+        if row['signal'] == True and in_trade == False:
+            in_trade = True
+            entry_date = date
+            entry_price = row['entry_price']
+
+        if row['exit_signal'] == True and in_trade == True: 
+            in_trade = False
+            exit_date = date
+            exit_price = row['entry_price']
+
+            trade = {
+                'entry_date' : entry_date,
+                'entry_price': entry_price,
+                'sell_date' : exit_date,
+                'sell_price': exit_price,
+                'profit': exit_price - entry_price,
+                'percentage': (exit_price - entry_price) / entry_price * 100
+            }
+            trade['multiplier'] = 1 + (trade['percentage'] / 100)
+            trades.append(trade)
 
     data = pd.DataFrame(trades)
     data['equity'] = capital * data['multiplier'].cumprod()
 
     return data
+
+    # for (buy_date,buy_rows),(exit_date,exit_rows)  in zip(buy_rows.iterrows(), exit_rows.iterrows()):
+    #     trade = {
+    #         'entry_date' : buy_date,
+    #         'entry_price': buy_rows['entry_price'],
+    #         'sell_date' : exit_date,
+    #         'sell_price': exit_rows['entry_price'],
+    #         'profit': exit_rows['entry_price'] - buy_rows['entry_price'],
+    #         'percentage': (exit_rows['entry_price'] - buy_rows['entry_price']) / buy_rows['entry_price'] * 100
+    #     }
+    #     trade['multiplier'] = 1 + (trade['percentage'] / 100)
+    #     trades.append(trade)
+
+    # data = pd.DataFrame(trades)
+    # data['equity'] = capital * data['multiplier'].cumprod()
+
+    # return data
 
 
 def calculate_metrics(trade_log):
@@ -78,7 +111,7 @@ def calculate_metrics(trade_log):
     if losses == 0:
         profit_factor = float('inf')
     else:
-        profit_factor = wins / losses
+        profit_factor = abs(wins / losses)
     
     return {
         'total_return' : round(total_return,2),
