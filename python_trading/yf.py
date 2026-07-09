@@ -23,9 +23,9 @@ def add_sma(data,size):
     return data
 
 
-def generate_signal(data,size1,size2):
-    fastsma = 'sma' + str(size1)
-    slowsma = 'sma' + str(size2)
+def generate_signal(data,fast,slow):
+    fastsma = 'sma' + str(fast)
+    slowsma = 'sma' + str(slow)
     data['signal'] = (
         (data[fastsma] > data[slowsma]) &
         (data[fastsma].shift(1) < data[slowsma].shift(1))
@@ -39,11 +39,7 @@ def generate_signal(data,size1,size2):
     data['entry_price'] = data['open'].shift(-1)
     return data
 
-def build_trade_log(result,amount):    
-    buy_rows = result[result['signal']]
-    exit_rows = result[result['exit_signal']]
-    # print(buy_rows)
-    # print(exit_rows)    
+def build_trade_log(result,starting_capital,stop_loss_per,risk_per):    
 
     trades = []
     in_trade = False
@@ -51,7 +47,14 @@ def build_trade_log(result,amount):
     entry_price = None
     exit_date = None
     exit_price = None
-    capital = amount 
+    sl_price = None
+    exit_reason = None
+    starting_capital = starting_capital
+    capital = starting_capital 
+    risk_amount = capital * risk_per / 100
+    risk_per_share = None
+    shares = None
+    deployed = None
 
     for date,row in result.iterrows():
 
@@ -59,48 +62,54 @@ def build_trade_log(result,amount):
             in_trade = True
             entry_date = date
             entry_price = row['entry_price']
+            sl_price =  row['entry_price'] * (1 - stop_loss_per / 100)
+            risk_per_share = row['entry_price'] - sl_price
+            shares = round(risk_amount / risk_per_share,0)
+            deployed = shares * row['entry_price']
 
-        if row['exit_signal'] == True and in_trade == True: 
-            in_trade = False
-            exit_date = date
-            exit_price = row['entry_price']
+            
+        elif in_trade:
+            
+            # check stop loss first
+            if row['low'] < sl_price:
+                in_trade = False 
+                exit_price = sl_price
+                exit_date = date
+                exit_reason = 'Stop loss'  
 
-            trade = {
-                'entry_date' : entry_date,
-                'entry_price': entry_price,
-                'sell_date' : exit_date,
-                'sell_price': exit_price,
-                'profit': exit_price - entry_price,
-                'percentage': (exit_price - entry_price) / entry_price * 100
-            }
-            trade['multiplier'] = 1 + (trade['percentage'] / 100)
-            trades.append(trade)
+            elif row['exit_signal'] == True and in_trade == True: 
+                in_trade = False
+                exit_date = date
+                exit_price = row['entry_price']
+                exit_reason = 'Sell Signal'  
+
+            if not in_trade:
+                trade = {
+                    'entry_date' : entry_date,
+                    'entry_price': entry_price,
+                    'Qty' : shares,
+                    'Investment' : deployed,
+                    'sell_date' : exit_date,
+                    'sell_price': exit_price,
+                    'Status': exit_reason,
+                    'profit': shares * (exit_price - entry_price),
+                    'percentage': (exit_price - entry_price) / entry_price * 100
+                }
+                        
+                trade['multiplier'] = 1 + (trade['percentage'] / 100)
+                trades.append(trade)
+                capital = capital + trade['profit']
+                risk_amount = capital * risk_per / 100
 
     data = pd.DataFrame(trades)
-    data['equity'] = capital * data['multiplier'].cumprod()
+    data['equity'] = round(starting_capital + data['profit'].cumsum(),2)
 
     return data
 
-    # for (buy_date,buy_rows),(exit_date,exit_rows)  in zip(buy_rows.iterrows(), exit_rows.iterrows()):
-    #     trade = {
-    #         'entry_date' : buy_date,
-    #         'entry_price': buy_rows['entry_price'],
-    #         'sell_date' : exit_date,
-    #         'sell_price': exit_rows['entry_price'],
-    #         'profit': exit_rows['entry_price'] - buy_rows['entry_price'],
-    #         'percentage': (exit_rows['entry_price'] - buy_rows['entry_price']) / buy_rows['entry_price'] * 100
-    #     }
-    #     trade['multiplier'] = 1 + (trade['percentage'] / 100)
-    #     trades.append(trade)
+def calculate_metrics(trade_log,starting_capital):
+    final_equity = trade_log['equity'].iloc[-1]
 
-    # data = pd.DataFrame(trades)
-    # data['equity'] = capital * data['multiplier'].cumprod()
-
-    # return data
-
-
-def calculate_metrics(trade_log):
-    total_return = trade_log['percentage'].sum()
+    total_return = (final_equity - starting_capital) / starting_capital * 100
     win_rate = (trade_log['percentage'] > 0).mean() * 100
     avg_win = trade_log['percentage'][trade_log['percentage'] > 0].mean()
     avg_loss = trade_log['percentage'][trade_log['percentage'] < 0].mean()
@@ -108,30 +117,38 @@ def calculate_metrics(trade_log):
     wins = trade_log['percentage'][trade_log['percentage'] > 0].sum()
     losses = trade_log['percentage'][trade_log['percentage'] < 0].sum()
 
+    peak = trade_log['equity'].cummax()
+    drawdown = (trade_log['equity'] - peak) / peak * 100
+    max_drawdown = drawdown.min()
+
     if losses == 0:
         profit_factor = float('inf')
     else:
         profit_factor = abs(wins / losses)
+
+    avg_win  = avg_win  if not pd.isna(avg_win)  else 0.0
+    avg_loss = avg_loss if not pd.isna(avg_loss) else 0.0
     
     return {
         'total_return' : round(total_return,2),
         'win_rate' : round(win_rate,2),
         'avg_win' : round(avg_win,2),
         'avg_loss' : round(avg_loss,2),
-        'profit_factor' : round(profit_factor,2)
+        'profit_factor' : round(profit_factor,2),
+        'max_drawdown' : round(max_drawdown,2)
     }
 
-def run_backtest(symbols, start, end, fast, slow, timeframe):
+def run_backtest(symbols, start, end, fast, slow, timeframe, starting_capital, stop, risk):
     all_results = []
 
     for symbol in symbols:
         data = get_data(symbol, start, end, timeframe)
         data = add_sma(data,size=slow)
         data = add_sma(data,size=fast)
-        data = generate_signal(data,slow,fast)
-        data = build_trade_log(data,100000)
+        data = generate_signal(data,fast,slow)
+        data = build_trade_log(data,starting_capital,stop,risk)
         print(data)
-        metrics = calculate_metrics(data)
+        metrics = calculate_metrics(data,starting_capital)
 
         metrics['symbol'] = symbol
 
@@ -139,10 +156,9 @@ def run_backtest(symbols, start, end, fast, slow, timeframe):
     summary = pd.DataFrame(all_results)
     return summary
 
-# symbols = ['PSPPROJECT.NS','EIEL.NS','CUPID.NS','INFY.NS']
 symbols = ['KPITTECH.NS']
 summary = run_backtest(
-    symbols=symbols, start='2025-01-01', end='2026-07-06', fast=20, slow=50, timeframe='1D'
+    symbols=symbols, start='2025-01-01', end='2026-07-06', fast=20, slow=50, timeframe='1D',starting_capital=100000,stop=5,risk=2
 )
 
 print(summary)
