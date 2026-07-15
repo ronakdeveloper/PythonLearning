@@ -1,7 +1,9 @@
 import yfinance as yf
 import pandas as pd
 
-def get_data(name,fromdate,todate,timeframe):    
+# Data import fron yfinance 
+def get_data(name,fromdate,todate,timeframe):
+    # Downloand data into dataframe       
     df = yf.download(
     tickers= name,
         start=fromdate,
@@ -13,30 +15,42 @@ def get_data(name,fromdate,todate,timeframe):
     ## lowercase everything after download
     df.columns = df.columns.str.lower()
     
+    # return data 
     return df
 
+# Adding sma columns into dataframe 
 def add_sma(data,size):
+    # naming sma based on size of sma
     name = 'sma' + str(size)    
 
+    # adding column and data into dataframe
     data[name] = data['close'].rolling(window=size).mean()   
 
+    # return data 
     return data
 
-
+# Buy sell signal generate 
 def generate_signal(data,fast,slow):
+    # Define fast sma and slow sma based on parameter
     fastsma = 'sma' + str(fast)
     slowsma = 'sma' + str(slow)
+
+    # generate buy signal and store it into column
     data['signal'] = (
         (data[fastsma] > data[slowsma]) &
         (data[fastsma].shift(1) < data[slowsma].shift(1))
     )
 
+    # generate sell signal and store it into column
     data['exit_signal'] = (
         (data[fastsma] < data[slowsma]) &
         (data[fastsma].shift(1) > data[slowsma].shift(1))
     )
 
+    ## generate entry price on signal created next day open price
     data['entry_price'] = data['open'].shift(-1)
+
+    ## return data
     return data
 
 def build_trade_log(result,starting_capital,stop_loss_per,risk_per):    
@@ -49,7 +63,6 @@ def build_trade_log(result,starting_capital,stop_loss_per,risk_per):
     exit_price = None
     sl_price = None
     exit_reason = None
-    starting_capital = starting_capital
     capital = starting_capital 
     risk_amount = capital * risk_per / 100
     risk_per_share = None
@@ -66,7 +79,6 @@ def build_trade_log(result,starting_capital,stop_loss_per,risk_per):
             risk_per_share = row['entry_price'] - sl_price
             shares = round(risk_amount / risk_per_share,0)
             deployed = shares * row['entry_price']
-
             
         elif in_trade:
             
@@ -145,7 +157,7 @@ def run_backtest(symbols, start, end, fast, slow, timeframe, starting_capital, s
         data = get_data(symbol, start, end, timeframe)
         data = add_sma(data,size=slow)
         data = add_sma(data,size=fast)
-        data = generate_signal(data,fast,slow)
+        data = generate_signal(data,fast,slow)        
         data = build_trade_log(data,starting_capital,stop,risk)
         print(data)
         metrics = calculate_metrics(data,starting_capital)
@@ -156,9 +168,10 @@ def run_backtest(symbols, start, end, fast, slow, timeframe, starting_capital, s
     summary = pd.DataFrame(all_results)
     return summary
 
-symbols = ['KPITTECH.NS']
+# symbols = ['KPITTECH.NS','VARROC.NS','WAAREERTL.BO','JUBLINGREA.NS','INDIAMART.BO','AAVAS.NS','LTFOODS.BO']
+symbols = ['WAAREERTL.BO']
 summary = run_backtest(
-    symbols=symbols, start='2025-01-01', end='2026-07-06', fast=20, slow=50, timeframe='1D',starting_capital=100000,stop=5,risk=2
+    symbols=symbols, start='2020-01-01', end='2026-07-06', fast=20, slow=50, timeframe='1D',starting_capital=100000,stop=5,risk=2
 )
 
 print(summary)
