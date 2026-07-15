@@ -159,7 +159,7 @@ def run_backtest(symbols, start, end, fast, slow, timeframe, starting_capital, s
         data = add_sma(data,size=fast)
         data = generate_signal(data,fast,slow)        
         data = build_trade_log(data,starting_capital,stop,risk)
-        print(data)
+        # print(data)
         metrics = calculate_metrics(data,starting_capital)
 
         metrics['symbol'] = symbol
@@ -174,4 +174,4 @@ summary = run_backtest(
     symbols=symbols, start='2020-01-01', end='2026-07-06', fast=20, slow=50, timeframe='1D',starting_capital=100000,stop=5,risk=2
 )
 
-print(summary)
+# print(summary)
