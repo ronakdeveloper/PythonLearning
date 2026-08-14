@@ -44,25 +44,31 @@ students = [
 def analyze_students(students):
     
     std = []
-    student_dict = {}
+    avg_dict = {}
+    my_dict = {}
     class_avg = None
 
     for student in students:
         name = student['name']
         marks = student['marks']
 
-        student_dict[name] = round(sum(marks.values()) / len(marks.values()),2)
+        avg_dict[name] = round(sum(marks.values()) / len(marks.values()),2)
     
-    
-    std.append(student_dict)
-    
-    class_avg = sum(student_dict.values()) / len(student_dict.values())
+    print(avg_dict.items())
+    for n,avg in avg_dict.items():
 
-    print(student_dict)
-    return {
-    'Students' :  std,
-    'Class Avg' : class_avg
-    }        
+        my_dict['name'] = n
+        my_dict['Average'] = avg
+        my_dict['Result'] = 'Pass' if avg > 60 else 'Fail'
+
+    
+    # class_avg = sum(student_dict.values()) / len(student_dict.values())
+    return std
+    # print(std)
+    # return {
+    # 'Students' :  std,
+    # 'Class Avg' : class_avg
+    # }        
 
 
 print(analyze_students(students))
