@@ -27,3 +27,11 @@ print(next(result))
 print(next(result))
 print(next(result))
 print(next(result))
+
+numbers = [1, 2]
+
+result = (x * 2 for x in numbers)
+
+print(next(result))  # 2
+print(next(result))  # 4
+# print(next(result))  # StopIteration
