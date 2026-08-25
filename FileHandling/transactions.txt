@@ -1,0 +1,8 @@
+Alice - 500
+Bob - 750
+INVALID DATA
+Charlie - 300
+Eva - abc
+David - 900
+Frank - 1200
+George - 450
