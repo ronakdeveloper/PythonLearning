@@ -1,0 +1,9 @@
+customer,amount,city,category
+Alice,500,Ahmedabad,Medium
+Bob,750,Mumbai,Medium
+Charlie,300,Delhi,Low
+David,900,Pune,High
+Eva,1200,Ahmedabad,High
+Frank,650,Mumbai,Medium
+Grace,400,Delhi,Medium
+Henry,300,Pune,Low

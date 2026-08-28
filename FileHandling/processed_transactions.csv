@@ -1,0 +1,5 @@
+customer,amount,city,status
+Alice,500,Ahmedabad,Normal
+Bob,750,Mumbai,High Value
+Charlie,300,Delhi,Normal
+David,900,Pune,High Value
