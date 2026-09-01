@@ -1,29 +1,36 @@
 class BankAccount:
     def __init__(self, owner, balance):
         self.owner = owner
-        self.balance = balance
+        self.__balance = balance
 
     def deposit(self, amount):
-        self.balance += amount
+        if amount <= 0:
+            print("Invalid deposit amount")
+            return self.__balance
 
-        return self.balance
+        self.__balance += amount
+
+        return self.__balance
 
     def withdraw(self,amount):
-        if amount > self.balance:
+        if amount > self.__balance:
             print('Insufficient balance')
-            return self.balance
-        self.balance -= amount
+            return self.__balance
+        self.__balance -= amount
 
-        return self.balance
+    def get_balance(self):
+        return self.__balance
 
-holder = BankAccount('Ronak', 50000)
+## inheritance
+class SavingAccount(BankAccount):
+    def __init__(self, owner, balance,interest_rate):
+        super().__init__(owner, balance)
+        self.interest_rate = interest_rate
 
-print('Before deposit balance :',holder.balance)
+    def add_interest(self):
+        interest_amount = self.balance * self.interest_rate / 100
+        self.balance += interest_amount
 
-holder.deposit(25000)
+        return self.balance,interest_amount        
 
-print('After deposit balance :',holder.balance)
-
-holder.withdraw(80000)
-
-print('After Withdrawl balance :', holder.balance)
+account_holder = BankAccount('Ronak', 50000)
